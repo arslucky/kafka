@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="warn">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss} %highlight{[%level]} %yellow{%C{3.}} - %msg%n" />
+        </Console>
+        <Console name="ConsoleApp" target="SYSTEM_OUT">
+            <PatternLayout pattern="%red{%d{HH:mm:ss}} %highlight{[%level]} %yellow{%C{3.}} - %red{%msg%n}" />
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="Console" />
+        </Root>
+        <Logger name="org.apache.kafka.clients.consumer" level="debug" additivity="false">
+            <AppenderRef ref="Console" />
+        </Logger>
+        <Logger name="org.ars.kafka" level="debug" additivity="false">
+            <AppenderRef ref="ConsoleApp" />
+        </Logger>
+    </Loggers>
+</Configuration>

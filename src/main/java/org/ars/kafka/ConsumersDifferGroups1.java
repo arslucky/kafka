@@ -69,9 +69,9 @@ public class ConsumersDifferGroups1 {
         SimpleDateFormat dateFormat = new SimpleDateFormat( TIME_FORMAT);
         long count;
 
-        public Consumer( String group) {
+        public Consumer( String client, String group) {
             try {
-                config.put( ConsumerConfig.CLIENT_ID_CONFIG, "client" + currentThread().getId());
+                config.put( ConsumerConfig.CLIENT_ID_CONFIG, client);
                 config.put( ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9091");
                 config.put( ConsumerConfig.GROUP_ID_CONFIG, group);
                 config.put( ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.IntegerDeserializer");
@@ -114,13 +114,13 @@ public class ConsumersDifferGroups1 {
             Producer producer = new Producer();
             Thread producerThread = new Thread( producer);
 
-            Consumer consumer1 = new Consumer( "group1");
+            Consumer consumer1 = new Consumer( "client1", "group1");
             Thread consumerThread1 = new Thread( consumer1);
 
-            Consumer consumer2 = new Consumer( "group1");
+            Consumer consumer2 = new Consumer( "client2", "group1");
             Thread consumerThread2 = new Thread( consumer2);
 
-            Consumer consumer3 = new Consumer( "group2");
+            Consumer consumer3 = new Consumer( "client3", "group2");
             Thread consumerThread3 = new Thread( consumer3);
 
             SimpleDateFormat dateFormat = new SimpleDateFormat( TIME_FORMAT);

@@ -22,7 +22,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
  * @author arsen.ibragimov
  *
  * one producer, partition and multiple consumers with shift on during consuming
- * a new consumer will picked up after 'heartbeat.interval.ms' 3 seconds by default
+ * a new consumer will be picked up after 'heartbeat.interval.ms' 3 seconds by default
  * The value must be set lower than 'session.timeout.ms', but typically should be set no higher than 1/3 of that value
 */
 public class ConsumersShift1 {
@@ -73,9 +73,9 @@ public class ConsumersShift1 {
         SimpleDateFormat dateFormat = new SimpleDateFormat( TIME_FORMAT);
         long count;
 
-        public Consumer( String group) {
+        public Consumer( String client, String group) {
             try {
-                config.put( ConsumerConfig.CLIENT_ID_CONFIG, "client" + currentThread().getId());
+                config.put( ConsumerConfig.CLIENT_ID_CONFIG, client);
                 config.put( ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9091");
                 config.put( ConsumerConfig.GROUP_ID_CONFIG, group);
                 config.put( ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 5);// max.poll.records
@@ -129,10 +129,10 @@ public class ConsumersShift1 {
             Producer producer = new Producer();
             Thread producerThread = new Thread( producer);
 
-            Consumer consumer1 = new Consumer( "group1");
+            Consumer consumer1 = new Consumer( "client1", "group1");
             Thread consumerThread1 = new Thread( consumer1);
 
-            Consumer consumer2 = new Consumer( "group1");
+            Consumer consumer2 = new Consumer( "client2", "group1");
             Thread consumerThread2 = new Thread( consumer2);
 
             SimpleDateFormat dateFormat = new SimpleDateFormat( TIME_FORMAT);
