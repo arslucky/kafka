@@ -16,6 +16,10 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 /*
  * @author arsen.ibragimov
@@ -24,9 +28,16 @@ import org.apache.kafka.clients.producer.ProducerRecord;
  */
 public class ConsumerClose1 {
 
+    static Logger log = LogManager.getLogger( ConsumerClose1.class);
+
     private static final String TIME_FORMAT = "kk:mm:ss.sss";
     static String topic = ConsumerClose1.class.getSimpleName();
     static String group = topic;
+
+    static {
+        Configurator.setRootLevel( Level.WARN);
+        Configurator.setLevel( "org.apache.kafka.clients.consumer", Level.WARN);
+    }
 
     static class Producer implements Runnable {
 
@@ -48,11 +59,11 @@ public class ConsumerClose1 {
         public void run() {
             try {
                 while( !closed.get()) {
-                    for( int i = 0; i < 5; i++) {
+                    for( int i = 0; i < 3; i++) {
                         long ms = System.currentTimeMillis();
                         ProducerRecord<Integer, Long> record = new ProducerRecord<>( topic, i, ms);
                         producer.send( record);
-                        System.out.println( "send:" + i + " " + dateFormat.format( new Date( ms)));
+                        log.info( "send:" + i + " " + dateFormat.format( new Date( ms)));
                         sleep( 200);
                     }
                 }
@@ -60,7 +71,7 @@ public class ConsumerClose1 {
                 e.printStackTrace();
             } finally {
                 producer.close();
-                System.out.println( "producer:stop");
+                log.info( "producer:stop");
             }
         }
 
@@ -99,14 +110,14 @@ public class ConsumerClose1 {
                 while( !closed.get()) {
                     ConsumerRecords<Integer, Long> records = consumer.poll( Duration.ofMillis( 100));
                     for( ConsumerRecord<Integer, Long> record : records) {
-                        System.out.println( String.format( "get:%s %s  %s", record.key(), dateFormat.format( new Date( record.value())), record.offset()));
+                        log.info( String.format( "get:%s %s  %s", record.key(), dateFormat.format( new Date( record.value())), record.offset()));
                     }
                 }
             } catch( Exception e) {
                 e.printStackTrace();
             } finally {
                 consumer.close();
-                System.out.println( "consumer:stop");
+                log.info( "consumer:stop");
             }
         }
 
@@ -124,10 +135,10 @@ public class ConsumerClose1 {
             Thread consumerThread = new Thread( consumer);
 
             SimpleDateFormat dateFormat = new SimpleDateFormat( TIME_FORMAT);
-            System.out.println( "start:" + dateFormat.format( new Date( System.currentTimeMillis())));
+            log.info( "start:" + dateFormat.format( new Date( System.currentTimeMillis())));
 
-            System.out.println( "topic:" + topic);
-            System.out.println( "group:" + group);
+            log.info( "topic:" + topic);
+            log.info( "group:" + group);
 
             producerThread.start();
             consumerThread.start();
@@ -136,7 +147,7 @@ public class ConsumerClose1 {
             sleep( 1000);
             consumer.shutdown();
         } catch( Exception e) {
-            System.out.println( e);
+            log.error( e);
         }
     }
 }

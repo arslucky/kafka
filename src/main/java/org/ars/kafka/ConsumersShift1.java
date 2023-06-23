@@ -1,6 +1,5 @@
 package org.ars.kafka;
 
-import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
 
 import java.text.SimpleDateFormat;
@@ -17,6 +16,10 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 /*
  * @author arsen.ibragimov
@@ -27,9 +30,16 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 */
 public class ConsumersShift1 {
 
+    static Logger log = LogManager.getLogger( ConsumersShift1.class);
+
     private static final String TIME_FORMAT = "kk:mm:ss.sss";
     static String topic = ConsumersShift1.class.getSimpleName();
     static AtomicBoolean flag = new AtomicBoolean();
+
+    static {
+        Configurator.setRootLevel( Level.WARN);
+        Configurator.setLevel( "org.apache.kafka.clients.consumer", Level.WARN);
+    }
 
     static class Producer implements Runnable {
 
@@ -50,7 +60,7 @@ public class ConsumersShift1 {
         @Override
         public void run() {
             try {
-                for( int i = 0; i < 10; i++) {
+                for( int i = 0; i < 3; i++) {
                     long ms = System.currentTimeMillis();
                     ProducerRecord<Integer, Long> record = new ProducerRecord<>( topic, i, ms);
                     producer.send( record);
@@ -60,7 +70,7 @@ public class ConsumersShift1 {
                 e.printStackTrace();
             } finally {
                 producer.close();
-                System.out.println( String.format( "producer:stop sent:%d", count));
+                log.info( String.format( "producer:stop sent:%d", count));
             }
         }
     }
@@ -72,13 +82,15 @@ public class ConsumersShift1 {
         KafkaConsumer<Integer, Long> consumer = null;
         SimpleDateFormat dateFormat = new SimpleDateFormat( TIME_FORMAT);
         long count;
+        String client;
 
         public Consumer( String client, String group) {
+            this.client = client;
             try {
-                config.put( ConsumerConfig.CLIENT_ID_CONFIG, client);
+                config.put( ConsumerConfig.CLIENT_ID_CONFIG, this.client);
                 config.put( ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9091");
                 config.put( ConsumerConfig.GROUP_ID_CONFIG, group);
-                config.put( ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 5);// max.poll.records
+                config.put( ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);// max.poll.records
                 // config.put( ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 1000); // heartbeat.interval.ms
                 config.put( ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.IntegerDeserializer");
                 config.put( ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.LongDeserializer");
@@ -91,21 +103,20 @@ public class ConsumersShift1 {
 
         @Override
         public void run() {
-            System.out.println( String.format( "consumer:%d:start", currentThread().getId()));
+            log.info( String.format( "%s:start", this.client));
             try {
                 boolean interupt = false;
                 consumer.subscribe( Arrays.asList( topic));
                 while( !closed.get()) {
                     if( interupt) {
-                        System.out.println( String.format( "consumer:%d:break", currentThread().getId()));
+                        log.info( String.format( "%s:break", this.client));
                         break;
                     }
                     ConsumerRecords<Integer, Long> records = consumer.poll( Duration.ofMillis( 100));
-                    // System.out.println( String.format( "consumer:%d:poll:%d", currentThread().getId(), records.count()));
                     for( ConsumerRecord<Integer, Long> record : records) {
-                        System.out.println( String.format( "get:%s-%s %s %s", currentThread().getId(), record.key(), dateFormat.format( new Date( record.value())), record.offset()));
+                        log.info( String.format( "%s %s %d", this.client, dateFormat.format( new Date( record.value())), record.offset()));
                         count++;
-                        if( count % 5 == 0 && flag.compareAndSet( false, true)) {
+                        if( count % 1 == 0 && flag.compareAndSet( false, true)) {
                             interupt = true;
                         }
                     }
@@ -113,8 +124,7 @@ public class ConsumersShift1 {
             } catch( Exception e) {
                 e.printStackTrace();
             } finally {
-                System.out.println( String.format( "consumer:%d:stop processed:%d %s", currentThread().getId(), count, consumer.groupMetadata().groupId()));
-                // consumer.unsubscribe(); //reset partition offset, another thread will pick up the same records
+                log.info( String.format( "%s:stop processed:%d %s", this.client, count, consumer.groupMetadata().groupId()));
                 consumer.close();
             }
         }
@@ -136,9 +146,9 @@ public class ConsumersShift1 {
             Thread consumerThread2 = new Thread( consumer2);
 
             SimpleDateFormat dateFormat = new SimpleDateFormat( TIME_FORMAT);
-            System.out.println( "start:" + dateFormat.format( new Date( System.currentTimeMillis())));
+            log.info( "start:" + dateFormat.format( new Date( System.currentTimeMillis())));
 
-            System.out.println( "topic:" + topic);
+            log.info( "topic:" + topic);
 
             producerThread.start();
             consumerThread1.start();
@@ -147,9 +157,9 @@ public class ConsumersShift1 {
             consumer1.shutdown();
             consumer2.shutdown();
 
-            System.out.println( "stop:" + dateFormat.format( new Date( System.currentTimeMillis())));
+            log.info( "stop:" + dateFormat.format( new Date( System.currentTimeMillis())));
         } catch( Exception e) {
-            System.out.println( e);
+            e.printStackTrace();
         }
     }
 }

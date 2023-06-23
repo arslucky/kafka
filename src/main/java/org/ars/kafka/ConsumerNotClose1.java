@@ -1,7 +1,5 @@
 package org.ars.kafka;
 
-import static java.lang.Thread.sleep;
-
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Arrays;
@@ -15,6 +13,10 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 /*
  * @author arsen.ibragimov
@@ -23,40 +25,43 @@ import org.apache.kafka.clients.producer.ProducerRecord;
  * steps:
  * 1. start program
  * 2. halt and restart at once
- * 3. consumer start to pick up records in ~41-43 seconds
- * Note: depends from 'session.timeout.ms' 45 seconds by default
+ * 3. consumer start to pick up records in ~10 seconds
+ * Note: depends from 'session.timeout.ms=10000', 45 seconds by default
  * where 'group.min.session.timeout.ms' (6 sec) <= 'session.timeout.ms' <= 'group.max.session.timeout.ms' (30 minutes)
  *
- * result
- *
-start:09:26:18.018
-send:0 09:26:18.018
-send:1 09:26:18.018
-send:2 09:26:18.018
-send:3 09:26:19.019
-send:4 09:26:19.019
-send:5 09:26:19.019
-send:6 09:26:19.019
-send:7 09:26:20.020
-send:8 09:26:20.020
-send:9 09:26:20.020
-timeout:41321
-get:0 09:26:18.018  936
-get:1 09:26:18.018  937
-get:2 09:26:18.018  938
-get:3 09:26:19.019  939
-get:4 09:26:19.019  940
-get:5 09:26:19.019  941
-get:6 09:26:19.019  942
-get:7 09:26:20.020  943
-get:8 09:26:20.020  944
-get:9 09:26:20.020  945
- */
+result
+
+09:59:28 [INFO] org.ars.kaf.ConsumerNotClose1 - start:09:59:28.028
+09:59:28 [INFO] org.ars.kaf.ConsumerNotClose1$Producer - send:0 09:59:28.028
+09:59:28 [INFO] org.ars.kaf.ConsumerNotClose1$Producer - send:1 09:59:28.028
+09:59:28 [INFO] org.ars.kaf.ConsumerNotClose1$Producer - send:2 09:59:28.028
+
+halt the first running
+
+09:59:34 [INFO] org.ars.kaf.ConsumerNotClose1 - start:09:59:34.034
+09:59:35 [INFO] org.ars.kaf.ConsumerNotClose1$Producer - send:0 09:59:34.034
+09:59:35 [INFO] org.ars.kaf.ConsumerNotClose1$Producer - send:1 09:59:35.035
+09:59:35 [INFO] org.ars.kaf.ConsumerNotClose1$Producer - send:2 09:59:35.035
+09:59:44 [INFO] org.ars.kaf.ConsumerNotClose1$Consumer - timeout:8468
+09:59:44 [INFO] org.ars.kaf.ConsumerNotClose1$Consumer - get:0 09:59:28.028 46
+09:59:44 [INFO] org.ars.kaf.ConsumerNotClose1$Consumer - get:1 09:59:28.028 47
+09:59:44 [INFO] org.ars.kaf.ConsumerNotClose1$Consumer - get:2 09:59:28.028 48
+09:59:44 [INFO] org.ars.kaf.ConsumerNotClose1$Consumer - get:0 09:59:34.034 49
+09:59:44 [INFO] org.ars.kaf.ConsumerNotClose1$Consumer - get:1 09:59:35.035 50
+09:59:44 [INFO] org.ars.kaf.ConsumerNotClose1$Consumer - get:2 09:59:35.035 51
+*/
 public class ConsumerNotClose1 {
+
+    static Logger log = LogManager.getLogger( ConsumerNotClose1.class);
 
     private static final String TIME_FORMAT = "kk:mm:ss.sss";
     static String topic = ConsumerNotClose1.class.getSimpleName();
     static String group = topic;
+
+    static {
+        Configurator.setRootLevel( Level.WARN);
+        Configurator.setLevel( "org.apache.kafka.clients.consumer", Level.WARN);
+    }
 
     static class Producer implements Runnable {
 
@@ -76,12 +81,11 @@ public class ConsumerNotClose1 {
         @Override
         public void run() {
             try {
-                for( int i = 0; i < 10; i++) {
+                for( int i = 0; i < 3; i++) {
                     long ms = System.currentTimeMillis();
                     ProducerRecord<Integer, Long> record = new ProducerRecord<>( topic, i, ms);
                     producer.send( record);
-                    System.out.println( "send:" + i + " " + dateFormat.format( new Date( ms)));
-                    sleep( 200);
+                    log.info( String.format( "send:%d %s", record.key(), dateFormat.format( new Date( ms))));
                 }
             } catch( Exception e) {
                 e.printStackTrace();
@@ -100,8 +104,8 @@ public class ConsumerNotClose1 {
                 config.put( ConsumerConfig.CLIENT_ID_CONFIG, "client1");
                 config.put( ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9091");
                 config.put( ConsumerConfig.GROUP_ID_CONFIG, group);
-                config.put( ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true"); // true by default
-                // config.put( ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "10000"); // 'session.timeout.ms' 45 seconds by default
+                // config.put( ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true"); // true by default
+                config.put( ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "10000"); // 'session.timeout.ms' 45 seconds by default
                 config.put( ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.IntegerDeserializer");
                 config.put( ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.LongDeserializer");
 
@@ -127,10 +131,10 @@ public class ConsumerNotClose1 {
                     }
                     if( records.count() != 0 && flag) {
                         flag = false;
-                        System.out.println( "timeout:" + (System.currentTimeMillis() - start));
+                        log.info( "timeout:" + (System.currentTimeMillis() - start));
                     }
                     for( ConsumerRecord<Integer, Long> record : records) {
-                        System.out.println( String.format( "get:%s %s  %s", record.key(), dateFormat.format( new Date( record.value())), record.offset()));
+                        log.info( String.format( "get:%d %s %d", record.key(), dateFormat.format( new Date( record.value())), record.offset()));
                     }
                 }
             } catch( Exception e) {
@@ -142,10 +146,10 @@ public class ConsumerNotClose1 {
     public static void main( String[] args) {
         try {
             SimpleDateFormat dateFormat = new SimpleDateFormat( TIME_FORMAT);
-            System.out.println( "start:" + dateFormat.format( new Date( System.currentTimeMillis())));
+            log.info( "start:" + dateFormat.format( new Date( System.currentTimeMillis())));
 
-            System.out.println( "topic:" + topic);
-            System.out.println( "group:" + group);
+            log.info( "topic:" + topic);
+            log.info( "group:" + group);
 
             Thread producerThread = new Thread( new Producer());
             Thread consumerThread = new Thread( new Consumer());
@@ -153,7 +157,7 @@ public class ConsumerNotClose1 {
             producerThread.start();
             consumerThread.start();
         } catch( Exception e) {
-            System.out.println( e);
+            e.printStackTrace();
         }
     }
 }
