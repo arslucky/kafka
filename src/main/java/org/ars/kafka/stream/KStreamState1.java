@@ -3,6 +3,7 @@ package org.ars.kafka.stream;
 import static java.lang.Thread.sleep;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -22,13 +23,13 @@ import org.apache.logging.log4j.core.config.Configurator;
 /**
  * @author arsen.ibragimov
  *
- *  calculate keys count
+ *         calculate keys count and display state
  */
-public class KStreamCount1 {
+public class KStreamState1 {
 
-    static Logger log = LogManager.getLogger( KStreamCount1.class);
+    static Logger log = LogManager.getLogger( KStreamState1.class);
 
-    static String topic = KStreamCount1.class.getSimpleName();
+    static String topic = KStreamState1.class.getSimpleName();
 
     static final String BOOTSTRAP_SERVERS = "kafka1:9091";
 
@@ -44,7 +45,7 @@ public class KStreamCount1 {
 
         public Producer() {
             config.put( ProducerConfig.CLIENT_ID_CONFIG, "producer1");
-            config.put( ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka1:9091");
+            config.put( ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
             config.put( ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.IntegerSerializer");
             config.put( ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.IntegerSerializer");
 
@@ -56,8 +57,7 @@ public class KStreamCount1 {
             log.info( "producer:start");
             try {
                 for( int i = 0; i < 3; i++) {
-                    // int key = (int) (Math.random() * 3l);
-                    int key = i;
+                    int key = (int) (Math.random() * 3l);
                     ProducerRecord<Integer, Integer> record = new ProducerRecord<>( topic, key, i);
                     producer.send( record);
                     log.info( String.format( "send key:%d, value:%d", key, i));
@@ -77,10 +77,10 @@ public class KStreamCount1 {
         KafkaStreams streams = null;
 
         public Consumer() throws IOException {
-            String baseDir = "./kafka-streams/" + KStreamCount1.class.getSimpleName();
+            String baseDir = "./kafka-streams/" + KStreamState1.class.getSimpleName();
 
             config.put( StreamsConfig.APPLICATION_ID_CONFIG, topic + "_client");
-            config.put( StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka1:9091");
+            config.put( StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
             config.put( StreamsConfig.STATE_DIR_CONFIG, baseDir);
             config.put( StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.Integer().getClass().getName());
             config.put( StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.Integer().getClass().getName());
@@ -98,8 +98,15 @@ public class KStreamCount1 {
                     log.info( String.format( "key:%d, count:%d", key, value));
                 });
                 streams = new KafkaStreams( builder.build(), config);
+
+                log.info( String.format( "consumer:state:before starting:%s", streams.state().name()));
                 streams.start();
+                log.info( String.format( "consumer:state:after starting:%s", streams.state().name()));
                 sleep( 1500);
+                log.info( String.format( "consumer:state:after delay:%s", streams.state().name()));
+                while( !streams.close( Duration.ofMillis( 1000))) {
+                    log.info( String.format( "consumer:closing:state:%s", streams.state().name()));
+                }
             } catch( Exception e) {
                 e.printStackTrace();
             } finally {

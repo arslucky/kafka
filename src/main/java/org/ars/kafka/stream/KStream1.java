@@ -28,6 +28,8 @@ public class KStream1 {
 
     static String topic = KStream1.class.getSimpleName();
 
+    static final String BOOTSTRAP_SERVERS = "kafka1:9091";
+
     static {
         Configurator.setRootLevel( Level.WARN);
         Configurator.setLevel( "org.apache.kafka.clients.consumer", Level.WARN);
@@ -40,7 +42,7 @@ public class KStream1 {
 
         public Producer() {
             config.put( ProducerConfig.CLIENT_ID_CONFIG, "producer1");
-            config.put( ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka1:9091");
+            config.put( ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
             config.put( ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.IntegerSerializer");
             config.put( ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.IntegerSerializer");
 
@@ -72,8 +74,8 @@ public class KStream1 {
         KafkaStreams streams = null;
 
         public Consumer() {
-            config.put( StreamsConfig.APPLICATION_ID_CONFIG, "client1");
-            config.put( StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka1:9091");
+            config.put( StreamsConfig.APPLICATION_ID_CONFIG, topic + "_client");
+            config.put( StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
             config.put( StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.Integer().getClass().getName());
             config.put( StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.Integer().getClass().getName());
             // rebalance optimization
