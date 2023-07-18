@@ -12,6 +12,8 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.ValueMapper;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,13 +22,13 @@ import org.apache.logging.log4j.core.config.Configurator;
 /**
  * @author arsen.ibragimov
  *
- *         Simple KStream output
+ *         Simple KStream output and map values
  */
-public class KStream1 {
+public class KStreamMapValues1 {
 
-    static Logger log = LogManager.getLogger( KStream1.class);
+    static Logger log = LogManager.getLogger( KStreamMapValues1.class);
 
-    static String topic = KStream1.class.getSimpleName();
+    static String topic = KStreamMapValues1.class.getSimpleName();
 
     static final String BOOTSTRAP_SERVERS = "kafka1:9091";
 
@@ -53,9 +55,8 @@ public class KStream1 {
         public void run() {
             log.info( "producer:start");
             try {
-                int key = 1;
                 for( int i = 0; i < 3; i++) {
-                    ProducerRecord<Integer, Integer> record = new ProducerRecord<>( topic, key, i);
+                    ProducerRecord<Integer, Integer> record = new ProducerRecord<>( topic, i);
                     producer.send( record);
                     log.info( "send:" + i);
                 }
@@ -88,9 +89,23 @@ public class KStream1 {
             try {
                 log.info( "consumer:start");
                 StreamsBuilder builder = new StreamsBuilder();
-                builder.stream( topic).foreach( ( key, value) -> {
+                KStream<Integer, Integer> stream = builder.stream( topic);
+
+                stream.foreach( ( key, value) -> {
                     log.info( String.format( "key:%d, value:%d", key, value));
                 });
+
+                KStream<Integer, String> stream1 = stream.mapValues( new ValueMapper<Integer, String>() {
+                    @Override
+                    public String apply( Integer value) {
+                        return "map:" + String.valueOf( value);
+                    }
+                });
+
+                stream1.foreach( ( key, value) -> {
+                    log.info( String.format( "key:%d, value:%s", key, value));
+                });
+
                 streams = new KafkaStreams( builder.build(), config);
 
                 Runtime.getRuntime().addShutdownHook( new Thread( streams::close));
