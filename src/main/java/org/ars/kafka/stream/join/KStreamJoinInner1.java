@@ -1,8 +1,9 @@
-package org.ars.kafka.stream;
+package org.ars.kafka.stream.join;
 
 import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
 
+import java.time.Duration;
 import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -13,8 +14,8 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.JoinWindows;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,13 +24,13 @@ import org.apache.logging.log4j.core.config.Configurator;
 /**
  * @author arsen.ibragimov
  *
- *         KTable output
+ *         Inner join
  */
-public class KTable1 {
+public class KStreamJoinInner1 {
 
-    static Logger log = LogManager.getLogger( KTable1.class);
+    static Logger log = LogManager.getLogger( KStreamJoinInner1.class);
 
-    static String topic = KTable1.class.getSimpleName();
+    static String topic = KStreamJoinInner1.class.getSimpleName();
 
     static final String BOOTSTRAP_SERVERS = "kafka1:9091";
 
@@ -54,19 +55,19 @@ public class KTable1 {
 
         @Override
         public void run() {
-            log.info( "producer:start");
+            log.info( String.format( "%s producer:start", currentThread().getName()));
             try {
                 for( int i = 0; i < 3; i++) {
                     int key = i;
                     ProducerRecord<Integer, Integer> record = new ProducerRecord<>( topic, key, i);
                     producer.send( record);
-                    log.info( String.format( "%s send key:%d, value:%d", currentThread().getName(), key, i));
+                    log.info( String.format( "%s send:%d", currentThread().getName(), i));
                 }
             } catch( Exception e) {
                 e.printStackTrace();
             } finally {
                 producer.close();
-                log.info( "producer:stop");
+                log.info( String.format( "%s producer:stop", currentThread().getName()));
             }
         }
     }
@@ -77,7 +78,7 @@ public class KTable1 {
         KafkaStreams streams = null;
 
         public Consumer() {
-            String baseDir = String.format( "./kafka-streams/%s", KTable1.class.getSimpleName());
+            String baseDir = String.format( "./kafka-streams/%s", KStreamJoinInner1.class.getSimpleName());
 
             config.put( StreamsConfig.APPLICATION_ID_CONFIG, topic + "_client");
             config.put( StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
@@ -94,23 +95,21 @@ public class KTable1 {
             try {
                 log.info( "consumer:start");
                 StreamsBuilder builder = new StreamsBuilder();
+                KStream<Integer, Integer> stream1 = builder.stream( topic);
+                KStream<Integer, Integer> stream2 = builder.stream( topic);
 
-                KStream<Integer, Integer> stream = builder.stream( topic);
-
-                stream.foreach( ( key, value) -> {
-                    log.info( String.format( "get key:%d, value:%d", key, value));
+                stream1.foreach( ( key, value) -> {
+                    log.info( String.format( "stream1 key:%d, value:%d", key, value));
                 });
 
-                KTable<Integer, Long> tableCount = stream.groupByKey().count();
-
-                tableCount.toStream().foreach( ( key, value) -> {
-                    log.info( String.format( "tableCount key:%d, count:%d", key, value));
+                stream2.foreach( ( key, value) -> {
+                    log.info( String.format( "stream2 key:%d, value:%d", key, value));
                 });
 
-                KTable<Integer, Integer> tableSum = stream.groupByKey().reduce( ( val1, val2) -> val1 + val2);
-
-                tableSum.toStream().foreach( ( key, value) -> {
-                    log.info( String.format( "tableSum key:%d, sum:%d", key, value));
+                KStream<Integer, Integer> streamJoin = stream1.join( stream2, ( val1, val2) -> val1 + val2, JoinWindows.ofTimeDifferenceWithNoGrace( Duration.ofMillis( 1000)));
+                // -------------------------------
+                streamJoin.foreach( ( key, value) -> {
+                    log.info( String.format( "joined key:%d, sum:%s", key, value));
                 });
 
                 streams = new KafkaStreams( builder.build(), config);
