@@ -22,55 +22,26 @@ import org.apache.logging.log4j.core.config.Configurator;
 /**
  * @author arsen.ibragimov
  *
- * KTable output
+ * KTable output with disabled cache
+ * disabling the cache will send all records downstream, including duplicate keys
  *
- * 2.1.1
- * KTable created as KTable<Integer, Integer> table = builder.table( topic);
- *
- * 09:50:51 [INFO] org.ars.kaf.str.tab.KTable2$Producer - producer:start
- * 09:50:52 [INFO] org.ars.kaf.str.tab.KTable2$Producer - send key:0, value:0
- * 09:50:52 [INFO] org.ars.kaf.str.tab.KTable2$Producer - send key:0, value:1
- * 09:50:52 [INFO] org.ars.kaf.str.tab.KTable2$Producer - send key:0, value:2
- * 09:50:52 [INFO] org.ars.kaf.str.tab.KTable2$Producer - producer:stop
- * 09:50:52 [INFO] org.ars.kaf.str.tab.KTable2$Consumer - consumer:start
- * 09:50:53 [INFO] org.ars.kaf.str.tab.KTable2$Consumer - store name:null
- * 09:50:54 [INFO] org.ars.kaf.str.tab.KTable2$Consumer - table key:0, value:2
- * 09:50:54 [INFO] org.ars.kaf.str.tab.KTable2$Consumer - consumer:stop
- *
- * 2.2.0
- * KTable created as KTable<Integer, Integer> table = builder.table( topic);
- * Note: StateStore hasn't created
- *
- * 09:51:32 [INFO] org.ars.kaf.str.tab.KTable2$Producer - producer:start
- * 09:51:32 [INFO] org.ars.kaf.str.tab.KTable2$Producer - send key:0, value:0
- * 09:51:32 [INFO] org.ars.kaf.str.tab.KTable2$Producer - send key:0, value:1
- * 09:51:32 [INFO] org.ars.kaf.str.tab.KTable2$Producer - send key:0, value:2
- * 09:51:32 [INFO] org.ars.kaf.str.tab.KTable2$Producer - producer:stop
- * 09:51:33 [INFO] org.ars.kaf.str.tab.KTable2$Consumer - consumer:start
- * 09:51:33 [INFO] org.ars.kaf.str.tab.KTable2$Consumer - store name:null
- * 09:51:33 [INFO] org.ars.kaf.str.tab.KTable2$Consumer - table key:0, value:0
- * 09:51:33 [INFO] org.ars.kaf.str.tab.KTable2$Consumer - table key:0, value:1
- * 09:51:33 [INFO] org.ars.kaf.str.tab.KTable2$Consumer - table key:0, value:2
- * 09:51:34 [INFO] org.ars.kaf.str.tab.KTable2$Consumer - consumer:stop
- *
- * 2.2.0 - 3.5.0 (latest)
- * KTable created as KTable<Integer, Integer> table = builder.table( topic, Materialized.as( "queryable-store-name"));
- *
- * 10:10:10 [INFO] org.ars.kaf.str.tab.KTable2$Producer - producer:start
- * 10:10:11 [INFO] org.ars.kaf.str.tab.KTable2$Producer - send key:0, value:0
- * 10:10:11 [INFO] org.ars.kaf.str.tab.KTable2$Producer - send key:0, value:1
- * 10:10:11 [INFO] org.ars.kaf.str.tab.KTable2$Producer - send key:0, value:2
- * 10:10:11 [INFO] org.ars.kaf.str.tab.KTable2$Producer - producer:stop
- * 10:10:11 [INFO] org.ars.kaf.str.tab.KTable2$Consumer - consumer:start
- * 10:10:11 [INFO] org.ars.kaf.str.tab.KTable2$Consumer - store name:queryable-store-name
- * 10:10:13 [INFO] org.ars.kaf.str.tab.KTable2$Consumer - table key:0, value:2
- * 10:10:13 [INFO] org.ars.kaf.str.tab.KTable2$Consumer - consumer:stop
+ * 13:38:12 [INFO] org.ars.kaf.str.tab.KTableDisabledCache1$Producer - producer:start
+ * 13:38:12 [INFO] org.ars.kaf.str.tab.KTableDisabledCache1$Producer - send key:0, value:0
+ * 13:38:12 [INFO] org.ars.kaf.str.tab.KTableDisabledCache1$Producer - send key:0, value:1
+ * 13:38:12 [INFO] org.ars.kaf.str.tab.KTableDisabledCache1$Producer - send key:0, value:2
+ * 13:38:12 [INFO] org.ars.kaf.str.tab.KTableDisabledCache1$Producer - producer:stop
+ * 13:38:13 [INFO] org.ars.kaf.str.tab.KTableDisabledCache1$Consumer - consumer:start
+ * 13:38:13 [INFO] org.ars.kaf.str.tab.KTableDisabledCache1$Consumer - store name:queryable-store-name
+ * 13:38:14 [INFO] org.ars.kaf.str.tab.KTableDisabledCache1$Consumer - table key:0, value:0
+ * 13:38:14 [INFO] org.ars.kaf.str.tab.KTableDisabledCache1$Consumer - table key:0, value:1
+ * 13:38:14 [INFO] org.ars.kaf.str.tab.KTableDisabledCache1$Consumer - table key:0, value:2
+ * 13:38:17 [INFO] org.ars.kaf.str.tab.KTableDisabledCache1$Consumer - consumer:stop
  */
-public class KTable2 {
+public class KTableDisabledCache1 {
 
-    static Logger log = LogManager.getLogger( KTable2.class);
+    static Logger log = LogManager.getLogger( KTableDisabledCache1.class);
 
-    static String topic = KTable2.class.getSimpleName();
+    static String topic = KTableDisabledCache1.class.getSimpleName();
 
     static final String BOOTSTRAP_SERVERS = "kafka1:9091";
 
@@ -118,7 +89,7 @@ public class KTable2 {
         KafkaStreams streams = null;
 
         public Consumer() {
-            String baseDir = String.format( "./kafka-streams/%s", KTable2.class.getSimpleName());
+            String baseDir = String.format( "./kafka-streams/%s", KTableDisabledCache1.class.getSimpleName());
 
             config.put( StreamsConfig.APPLICATION_ID_CONFIG, topic + "_client");
             config.put( StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
@@ -128,7 +99,9 @@ public class KTable2 {
             // rebalance optimization
             config.put( "internal.leave.group.on.close", "true");
             config.put( ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "6000");
-            config.put( StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "1000"); // forwards the record “downstream” to its child nodes, 30 sec by default
+            // config.put( StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "1000"); // forwards the record “downstream” to its child nodes, 30 sec by default. Doesn't matter when cache buffer disabled
+            // config.put( StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, "0"); // disable caching, deprecated
+            config.put( StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, "0"); // disable caching
         }
 
         @Override
@@ -137,7 +110,6 @@ public class KTable2 {
                 log.info( "consumer:start");
                 StreamsBuilder builder = new StreamsBuilder();
 
-                // KTable<Integer, Integer> table = builder.table( topic);
                 KTable<Integer, Integer> table = builder.table( topic, Materialized.as( "queryable-store-name"));
 
                 table.toStream().foreach( ( key, value) -> {
@@ -153,7 +125,7 @@ public class KTable2 {
                 Runtime.getRuntime().addShutdownHook( new Thread( streams::close));
 
                 streams.start();
-                sleep( 3000);
+                sleep( 2000);
             } catch( Exception e) {
                 e.printStackTrace();
             } finally {
