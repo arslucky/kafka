@@ -69,7 +69,7 @@ public class ProducerPartitions1 {
 
     static Logger log = LogManager.getLogger( ProducerPartitions1.class);
 
-    private static final String TIME_FORMAT = "kk:mm:ss.sss";
+    private static final String TIME_FORMAT = "kk:mm:ss.SSS";
     static String topic = ProducerPartitions1.class.getSimpleName();
 
     static {

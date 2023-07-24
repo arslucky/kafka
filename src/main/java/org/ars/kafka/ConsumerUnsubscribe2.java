@@ -42,7 +42,7 @@ public class ConsumerUnsubscribe2 {
 
     static Logger log = LoggerFactory.getLogger( ConsumerUnsubscribe2.class);
 
-    private static final String TIME_FORMAT = "kk:mm:ss.sss";
+    private static final String TIME_FORMAT = "kk:mm:ss.SSS";
     static String topic = ConsumerUnsubscribe2.class.getSimpleName();
     static AtomicBoolean flag = new AtomicBoolean();
 

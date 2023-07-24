@@ -54,7 +54,7 @@ public class ConsumerNotClose1 {
 
     static Logger log = LogManager.getLogger( ConsumerNotClose1.class);
 
-    private static final String TIME_FORMAT = "kk:mm:ss.sss";
+    private static final String TIME_FORMAT = "kk:mm:ss.SSS";
     static String topic = ConsumerNotClose1.class.getSimpleName();
     static String group = topic;
 

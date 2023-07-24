@@ -30,7 +30,7 @@ public class ConsumerClose1 {
 
     static Logger log = LogManager.getLogger( ConsumerClose1.class);
 
-    private static final String TIME_FORMAT = "kk:mm:ss.sss";
+    private static final String TIME_FORMAT = "kk:mm:ss.SSS";
     static String topic = ConsumerClose1.class.getSimpleName();
     static String group = topic;
 

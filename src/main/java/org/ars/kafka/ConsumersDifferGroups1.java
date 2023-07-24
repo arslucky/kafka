@@ -30,7 +30,7 @@ public class ConsumersDifferGroups1 {
 
     static Logger log = LogManager.getLogger( ConsumersDifferGroups1.class);
 
-    private static final String TIME_FORMAT = "kk:mm:ss.sss";
+    private static final String TIME_FORMAT = "kk:mm:ss.SSS";
     static String topic = ConsumersDifferGroups1.class.getSimpleName();
 
     static {

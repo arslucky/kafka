@@ -34,7 +34,7 @@ public class ConsumersManualCommit1 {
 
     static Logger log = LogManager.getLogger( ConsumersManualCommit1.class);
 
-    private static final String TIME_FORMAT = "kk:mm:ss.sss";
+    private static final String TIME_FORMAT = "kk:mm:ss.SSS";
     static String topic = ConsumersManualCommit1.class.getSimpleName();
     static AtomicBoolean flag = new AtomicBoolean();
 

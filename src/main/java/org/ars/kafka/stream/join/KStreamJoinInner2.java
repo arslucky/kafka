@@ -77,7 +77,7 @@ public class KStreamJoinInner2 {
 
     static class MyFixedKeyProcessor implements FixedKeyProcessor<Integer, Integer, Integer> {
 
-        private static final String TIME_FORMAT = "kk:mm:ss.sss";
+        private static final String TIME_FORMAT = "kk:mm:ss.SSS";
         SimpleDateFormat dateFormat = new SimpleDateFormat( TIME_FORMAT);
         int index;
 

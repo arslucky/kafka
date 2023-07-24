@@ -64,7 +64,7 @@ public class ConsumerUnsubscribe1 {
 
     static Logger log = LoggerFactory.getLogger( ConsumerUnsubscribe1.class);
 
-    private static final String TIME_FORMAT = "kk:mm:ss.sss";
+    private static final String TIME_FORMAT = "kk:mm:ss.SSS";
     static String topic = ConsumerUnsubscribe1.class.getSimpleName();
 
     static class Producer implements Runnable {

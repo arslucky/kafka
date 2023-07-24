@@ -32,7 +32,7 @@ public class ConsumersShift1 {
 
     static Logger log = LogManager.getLogger( ConsumersShift1.class);
 
-    private static final String TIME_FORMAT = "kk:mm:ss.sss";
+    private static final String TIME_FORMAT = "kk:mm:ss.SSS";
     static String topic = ConsumersShift1.class.getSimpleName();
     static AtomicBoolean flag = new AtomicBoolean();
 

@@ -30,7 +30,7 @@ public class ProducerTransaction1 {
 
     static Logger log = LogManager.getLogger( ProducerTransaction1.class);
 
-    private static final String TIME_FORMAT = "kk:mm:ss.sss";
+    private static final String TIME_FORMAT = "kk:mm:ss.SSS";
     static String topic = ProducerTransaction1.class.getSimpleName();
     static String group = topic;
 
