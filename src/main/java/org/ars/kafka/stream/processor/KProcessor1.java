@@ -185,6 +185,7 @@ public class KProcessor1 {
 
                 streams.start();
                 sleep( 1500);
+                log.info( topology.describe());
             } catch( Exception e) {
                 e.printStackTrace();
             } finally {
