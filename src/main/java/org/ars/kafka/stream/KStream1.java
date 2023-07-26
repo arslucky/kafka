@@ -89,7 +89,7 @@ public class KStream1 {
                 log.info( "consumer:start");
                 StreamsBuilder builder = new StreamsBuilder();
                 builder.stream( topic).foreach( ( key, value) -> {
-                    log.info( String.format( "key:%d, value:%d", key, value));
+                    log.info( "key:{}, value:{}", key, value);
                 });
                 streams = new KafkaStreams( builder.build(), config);
 
