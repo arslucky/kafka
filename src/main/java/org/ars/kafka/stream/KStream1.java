@@ -12,6 +12,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,7 +58,7 @@ public class KStream1 {
                 for( int i = 0; i < 3; i++) {
                     ProducerRecord<Integer, Integer> record = new ProducerRecord<>( topic, key, i);
                     producer.send( record);
-                    log.info( "send:" + i);
+                    log.info( "send:{}", i);
                 }
             } catch( Exception e) {
                 e.printStackTrace();
@@ -68,7 +69,7 @@ public class KStream1 {
         }
     }
 
-    static class Consumer implements Runnable {
+    public static class Consumer implements Runnable {
 
         Properties config = new Properties();
         KafkaStreams streams = null;
@@ -87,11 +88,7 @@ public class KStream1 {
         public void run() {
             try {
                 log.info( "consumer:start");
-                StreamsBuilder builder = new StreamsBuilder();
-                builder.stream( topic).foreach( ( key, value) -> {
-                    log.info( "key:{}, value:{}", key, value);
-                });
-                streams = new KafkaStreams( builder.build(), config);
+                streams = new KafkaStreams( build(), config);
 
                 Runtime.getRuntime().addShutdownHook( new Thread( streams::close));
 
@@ -103,6 +100,17 @@ public class KStream1 {
                 streams.close();
                 log.info( "consumer:stop");
             }
+        }
+
+        public static Topology build() {
+            StreamsBuilder builder = new StreamsBuilder();
+            builder.stream( topic).foreach( ( key, value) -> {
+                log.info( "key:{}, value:{}", key, value);
+            });
+
+            Topology topology = builder.build();
+            log.info( topology.describe());
+            return topology;
         }
     }
 
